@@ -1,8 +1,0 @@
-{
-    "Cannabis Community": ["Cannabis"],
-    "Opioid Community": ["Oxycodone", "Codeine", "Morphine", "Fentanyl", "Hydrocodone"],
-    "Hallucinogens Community": ["LSD", "MDMA", "Shroom", "Mescaline", "DMT", "Ketamine"],
-    "CNS Stimulants Community": ["Cocaine", "Amphetamine", "Methamphetamine"],
-    "Depressant Community":  ["Xanax", "Farmapram", "Valium", "Halcion", "Ativan", "Klonopin", "Alparazolam", "Diazepam"],
-    "Drug Community": ["Drug"]
-}
