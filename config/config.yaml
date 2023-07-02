@@ -1,0 +1,30 @@
+#Root Path
+root: &root_dir D:\Program\CommunityDetection
+logger_dir: !join [*root_dir, logger]
+data_dir: !join [*root_dir, data]
+model_dir: !join [*root_dir, saved_models]
+#dataset
+dataset: Cora-author #Options ["Citeseer-citation", "Cora-author", "Cora-citation", "Twitter"]
+feature type: bio_drug_other #Options ["bio", "bio_drug", "bio_drug_other", "drug", "other"]
+split ratio: 0.6 #Ratio to split dataset into train and test.
+#Cuda
+cuda: 0
+seed: 3
+#Hypergraph Settings:
+graph method: clique #Options to transfer hypergraph to graph [clique, a*]
+#Model Settings:
+model: HyGCL-DC  #[HyperGCN, HGNN, CEGCN, CEGAT, GCN]
+n_layers: 2
+hidden dim: 256
+#Contrastive Learning
+cl hidden dim: 256
+cl augmentation ratio: 0.2
+cl temperature: 0.6
+cl threshold: 0.45
+#Train
+epoch: 200
+print epoch: 10
+dropout: 0.4
+lr: 0.001   #Learning Rate
+weight_decay: 0.001 # Weight Decay rate
+alpha: 0.1  #Balance control for losses
