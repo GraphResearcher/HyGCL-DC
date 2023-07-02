@@ -72,7 +72,7 @@ def get_evaluation_metric(y_pred, y_true, n_cls):
 
 def run(cfg, aug_method=["mask", "hyperedge"]):
     best = 0.0
-
+    best_result = None
     dataset_dir = osp.join(cfg["data_dir"], cfg["dataset"])
     dataset = load_data(dataset_dir, cfg)
 
@@ -134,10 +134,11 @@ def run(cfg, aug_method=["mask", "hyperedge"]):
             measure = result["f1 score"]
             if measure > best:
                 best = measure
+                best_result = result
             pbar.set_description(f' model Loss: {model_loss:.4f} '
                                  f'cl loss: {cl_loss:.4f}  total loss: {loss:.4f} best: {best:.4f}')
 
-    return best
+    return best_result
 
 
 def run5(cfg, aug_method):
