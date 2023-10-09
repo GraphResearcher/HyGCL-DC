@@ -21,6 +21,8 @@ Cora-citation is paper citation network
 
 Tianyi Ma - tma2@nd.edu 
 
+Yiyue Qian - yqian5@nd.edu or yxq250@case.edu
+
 Discussions, suggestions and questions are always welcome!
 
 ## Citation
