@@ -4,7 +4,8 @@ import numpy as np
 from itertools import combinations
 import numpy.random as random
 import os.path as osp
-
+from scipy.sparse import csr_matrix
+from scipy.sparse import save_npz, load_npz
 from model import Laplacian
 
 
@@ -69,8 +70,8 @@ def load_citation_data(path_dir):
 
 
 def load_twitter_data(path_dir):
-    hyperedge_file_path = osp.join(path_dir, "hyperedges.txt")
-    H = np.loadtxt(hyperedge_file_path).astype(np.int32)
+    hyperedge_file_path = osp.join(path_dir, "hyperedges.npz")
+    H = load_npz(hyperedge_file_path).astype(np.int32).toarray()
 
     embed_file_path = osp.join(path_dir, f"community_id_embed_bio_drug_other.txt")
     X = np.loadtxt(embed_file_path)
