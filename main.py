@@ -1,165 +1,131 @@
-from config import get_config
-import scipy.sparse as sp
-import os
-import os.path as osp
-from utils import *
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
+import time
 from tqdm import tqdm
-from model import HyperGCN, Laplacian
-from logger.logger import get_logger
-from datetime import datetime
-from itertools import combinations
-
-cfg = get_config()
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "True" if cfg["cuda"] in [0, 1, 2, 3] else "False"
-os.environ['PYTHONHASHSEED'] = str(cfg["seed"])
-
-if cfg["cuda"] in [0, 1, 2, 3]:
-    device = torch.device('cuda:' + str(cfg["cuda"])
-                          if torch.cuda.is_available() else 'cpu')
-else:
-    device = torch.device('cpu')
+from argument import parse_args
+from utils import *
 
 
-def parse_model(dataset, cfg):
-    n_layers = cfg["n_layers"]
-    n_hid = cfg["hidden dim"]
-    V, XE, L = dataset.n, dataset.XE, dataset.L
-    in_ch, n_classes = dataset.n_features, dataset.n_cls
-    mlphid = cfg["cl hidden dim"]
-    dropout = cfg["dropout"]
-    cuda = type(cfg["cuda"]) is int
-    if cfg["model"] == "HyGCL-DC":
-        reapproximate = False
-        mediators = True
-        structure = Laplacian(V, L, XE, True)
-        model = HyperGCN(in_ch, n_layers, n_hid, n_classes, structure, reapproximate, dropout, mediators,
-                         mlphid, cuda)
-    return model
-
-
-def train(model, dataset, cfg, device, cl=False):
-    V, L = dataset.n, dataset.L
-    X, XE = dataset.X_TORCH, dataset.XE_TORCH
-    if cfg["model"] == "HyGCL-DC":
-        if cl:
-            from model import Laplacian
-            structure = Laplacian(V, L, XE.cpu(), True).to(device)
-            out = model.forward_cl(XE, structure)
-        else:
-            out = model.forward(XE)
+def train(model, data, device, args, cl=False):
+    if cl:
+        out = model.forward_cl(data, data.structure)
+    else:
+        out = model.forward(data, data.structure)
     return out
 
 
-def get_evaluation_metric(y_pred, y_true, n_cls):
-    if len(y_pred.shape) == 1:
-        y_pred = F.one_hot(y_pred, num_classes=n_cls)
-    if len(y_true.shape) == 1:
-        y_true = F.one_hot(y_true, num_classes=n_cls)
-    sum_y_pred = y_pred.sum(0)
-    sum_y_true = y_true.sum(0)
-    index_y_pred = torch.argsort(sum_y_pred)
-    index_y_true = torch.argsort(sum_y_true)
-    y_pred = y_pred[:, index_y_pred]
-    y_true = y_true[:, index_y_true]
-    return eval_scores(y_pred, y_true)
+def run(args):
+
+    fix_seed(args.seed)
+    logger = Logger(args.runs, args)
+
+    if args.cuda in [0, 1, 2, 3]:
+        device = torch.device('cuda:' + str(args.cuda)
+                              if torch.cuda.is_available() else 'cpu')
+    else:
+        device = torch.device('cpu')
 
 
-def run(cfg, aug_method=["mask", "hyperedge"]):
-    best = 0.0
-    best_result = None
-    dataset_dir = osp.join(cfg["data_dir"], cfg["dataset"])
-    dataset = load_data(dataset_dir, cfg)
+    data, args = load_data(args)
+    data.device = device
+    data.update()
+    model = parse_model(args)
+    model.to(device)
+    activation, loss_function, cl_function, pred_function = get_functions(args.dname)
 
-    dataset.device = device
-    dataset.update()
 
-    X, Y = dataset.X_TORCH, dataset.Y_TORCH
-    overlapping = dataset.name == "Twitter"
+    split_idx_list = []
+    for run in range(args.runs):
+        split_idx = rand_train_test_idx(data.Y, train_prop=args.train_prop, valid_prop=args.valid_prop)
+        split_idx_list.append(split_idx)
 
-    Y = torch.where(Y)[1] if not overlapping else Y
+    runtime_list = []
+    for run in tqdm(range(args.runs)):
+        start_time = time.time()
+        split_idx = split_idx_list[run]
+        train_idx, valid_idx, test_idx = split_idx["train"], split_idx["valid"], split_idx["test"]
 
-    train_idx, test_idx = dataset.train_idx, dataset.test_idx
+        model.reset_parameters()
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
 
-    model = parse_model(dataset, cfg)
+        for epoch in range(args.epochs):
 
-    optimizer = optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
-    activation, loss_function, cl_function, pred_function = get_functions(cfg["dataset"])
-    model = model.to(device)
+            model.train()
+            optimizer.zero_grad()
 
-    y_true = Y
-    pbar = tqdm(range(cfg["epoch"]))
+            data_aug1 = aug(dataset=data, method=args.aug_method, ratio=args.aug_ratio, deepcopy=True)
+            data_aug2 = aug(dataset=data, method=args.aug_method, ratio=args.aug_ratio, deepcopy=True)
 
-    for epoch in pbar:
+            out1 = train(model=model, data=data_aug1, device=device, args=args, cl=True)
+            out2 = train(model=model, data=data_aug2, device=device, args=args, cl=True)
 
-        model.train()
-        optimizer.zero_grad()
+            cl_loss = cl_function(out1, out2, args.cl_temperature)
 
-        cl_loss, model_loss, loss = 0.0, 0.0, 0.0
+            loss = cl_loss * args.alpha
 
-        if aug_method:
-            # data_aug1 = aug(dataset, ["mask", "hyperedge"], True)
-            # data_aug2 = aug(dataset, ["mask", "hyperedge"], True)
+            output = train(model=model, data=data, device=device, args=args, cl=False)
+            logit = activation(output) if activation == F.sigmoid else activation(output, dim=1)
 
-            data_aug1 = aug(dataset, aug_method, True)
-            data_aug2 = aug(dataset, aug_method, True)
+            model_loss = loss_function(logit[train_idx], data.Y_TORCH[train_idx])
+            loss += model_loss
 
-            out1 = train(model=model, cl=True, cfg=cfg, dataset=data_aug1, device=device)
-            out2 = train(model=model, cl=True, cfg=cfg, dataset=data_aug2, device=device)
+            loss.backward()
+            optimizer.step()
 
-            cl_loss = cl_function(out1, out2, cfg["cl temperature"])
-
-            loss = cl_loss * cfg["alpha"]
-
-        output = train(model=model, cl=False, cfg=cfg, dataset=dataset, device=device)
-        y_pred = activation(output) if activation == F.sigmoid else activation(output, dim=1)
-
-        model_loss = loss_function(y_pred[train_idx], y_true[train_idx])
-        loss += model_loss
-
-        loss.backward()
-        optimizer.step()
-
-        if epoch % cfg["print epoch"] == 0:
             model.eval()
-            output = train(model=model, cl=False, cfg=cfg, dataset=dataset, device=device)
-            y_pred = activation(output) if activation == F.sigmoid else activation(output, dim=1)
-            y_pred = pred_function(y_pred.detach(), cfg["cl threshold"]).type_as(Y).cpu()
-            result = get_evaluation_metric(y_pred=y_pred[test_idx], y_true=y_true.cpu()[test_idx], n_cls=dataset.n_cls)
-            measure = result["f1 score"]
-            if measure > best:
-                best = measure
-                best_result = result
-            pbar.set_description(f' model Loss: {model_loss:.4f} '
-                                 f'cl loss: {cl_loss:.4f}  total loss: {loss:.4f} best: {best:.4f}')
+            with torch.no_grad():
+                output = train(model=model, data=data, device=device, args=args, cl=False)
+                logit = activation(output) if activation == F.sigmoid else activation(output, dim=1)
 
-    return best_result
+                train_loss = loss_function(logit[train_idx], data.Y_TORCH[train_idx])
+                valid_loss = loss_function(logit[valid_idx], data.Y_TORCH[valid_idx])
+                test_loss = loss_function(logit[test_idx], data.Y_TORCH[test_idx])
+                y_pred = pred_function(logit, args.threshold)
 
+                result = evaluate(y_true=data.Y_TORCH, y_pred=y_pred, split_idx=split_idx, num_classes=args.num_classes,
+                                  loss_function=loss_function)
+                logger.add_result(run, result[:6])
 
-def run5(cfg, aug_method):
-    f1, jaccard, mod, nmi = [], [], [], []
-    for idx in range(5):
-        result = run(cfg, aug_method=aug_method)
-        print(result)
-        f1.append(result["f1 score"])
-        jaccard.append(result["Jaccard"])
+            if epoch % args.display_step == 0 and args.display_step > 0:
+                print(f'Epoch: {epoch:02d}, '
+                      f'CL Loss: {cl_loss:.4f}, '
+                      f'Train Loss: {train_loss:.4f}, '
+                      f'Valid Loss: {valid_loss:.4f}, '
+                      f'Test  Loss: {test_loss:.4f}, '
+                      f'Train F1: {100 * result[0]:.2f}%, '
+                      f'Train Jaccard: {100 * result[1]:.2f}%, '
+                      f'Valid F1: {100 * result[2]:.2f}%, '
+                      f'Valid Jaccard: {100 * result[3]:.2f}%, '
+                      f'Test F1: {100 * result[4]:.2f}%, '
+                      f'Test Jaccard: {100 * result[5]:.2f}%, '
+                      )
+        end_time = time.time()
+        runtime_list.append(end_time - start_time)
 
-        # curr_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        # np.savetxt(rf"D:\Program\CommunityDetection\ablation\TSNE\{cfg['dataset']}_{cfg['model']}_{curr_time}.txt", data)
+    avg_time, std_time = np.mean(runtime_list), np.std(runtime_list)
 
-    return {"f1 score": np.round(np.mean(f1) * 100, 2), "f1 score std": np.round(np.std(f1) * 100, 2),
-            "jaccard": np.round(100 * np.mean(jaccard), 2), "jaccard std": np.round(np.std(jaccard) * 100, 2)}
+    best_val_f1, best_val_jaccard, best_test_f1, best_test_jaccard = logger.print_statistics()
+
+    res_root = osp.join(args.root_dir, 'results')
+    if not osp.isdir(res_root):
+        os.makedirs(res_root)
+
+    filename = f'{res_root}/{args.dname}.csv'
+    print(f"Saving results to {filename}")
+    with open(filename, 'a+') as write_obj:
+        cur_line = f'{args.method}_{args.lr}_{args.wd}'
+        cur_line += f',{best_val_f1.mean():.3f} ± {best_val_f1.std():.3f}'
+        cur_line += f',{best_val_jaccard.mean():.3f} ± {best_val_jaccard.std():.3f}'
+        cur_line += f',{best_test_f1.mean():.3f} ± {best_test_f1.std():.3f}'
+        cur_line += f',{best_test_jaccard.mean():.3f} ± {best_test_jaccard.std():.3f}'
+        cur_line += f',{avg_time // 60}min{(avg_time % 60):.2f}s'
+        cur_line += f'\n'
+        write_obj.write(cur_line)
+
+    all_args_file = f'{res_root}/all_args_{args.dname}.csv'
+    with open(all_args_file, 'a+') as f:
+        f.write(str(args))
+        f.write('\n')
 
 
 if __name__ == '__main__':
-    aug_method = ["mask", "hyperedge"]
-    log_file = "train5.log"
-    logger = get_logger(osp.join(cfg["logger_dir"], log_file), hdl=["file", "stdout"])
-    result = run5(cfg, aug_method=aug_method)
-    logger.info({"model": cfg["model"], "dataset": cfg["dataset"]})
-    logger.info(result)
+    args = parse_args()
+    run(args)

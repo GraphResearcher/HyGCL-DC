@@ -10,7 +10,7 @@ def mask_nodes(dataset, ratio):
     mask_node_index = np.random.choice(node_num, mask_node_num, replace=False)
     mask = random.rand(mask_node_num, dataset.X.shape[1])
     dataset.X[mask_node_index] = dataset.X[mask_node_index] + mask
-    dataset.update_edges()
+    dataset.update()
     return dataset
 
 
@@ -20,7 +20,7 @@ def permute_hyperedges(dataset, aug_ratio):
     keep_hyperedge_num = hyperedge_num - permute_num
     edge_keep_index = np.random.choice(hyperedge_num, keep_hyperedge_num, replace=False)
     dataset.H = dataset.H[edge_keep_index]
-    dataset.update_edges()
+    dataset.update()
     return dataset
 
 
@@ -40,5 +40,4 @@ def aug(dataset, method, ratio, deepcopy=False):
     else:
         raise ValueError("Unknown input methods")
     return data_aug
-
 

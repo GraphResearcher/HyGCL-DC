@@ -61,20 +61,20 @@ def get_pred_function(overlapping):
 
 
 def overlapping_prediction(output, threshold):
-    return (output > threshold)
+    return (output>threshold)
 
 
-def classification_prediction(output, threshold=None):
-    return output.max(1)[1]
+def classification_prediction(output, threshold):
+    return output.argmax(1)
 
 
 def get_functions(dataname):
-    if dataname == "Twitter":
+    if dataname == "twitter":
         activation = get_activation_function("sigmoid")
         loss_function = get_loss_function("BCELOSS")
         cl_function = get_cl_loss_function("InfoNCE")
         pred_function = get_pred_function(True)
-    elif dataname in ["Citeseer-citation", "Cora-author", "Cora-citation"]:
+    elif dataname in ["citeseer", "cora", "cora-ca"]:
         activation = get_activation_function("log_softmax")
         loss_function = get_loss_function("nll_loss")
         cl_function = get_cl_loss_function("InfoNCE")

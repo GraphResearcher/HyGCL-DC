@@ -75,48 +75,63 @@ class SparseMM(torch.autograd.Function):
 
 
 class HyperGCN(nn.Module):
-    def __init__(self, n_features, n_layers, n_hidden, n_classes, structure, reapproximate, dropout, mediators, nethid, cuda=True):
+    def __init__(self, num_features, num_layers, num_classes, args):
         """
         d: initial node-feature dimension
         h: number of hidden units
         c: number of classes
         """
         super(HyperGCN, self).__init__()
-        d, l, c = n_features, n_layers, n_classes
-        cuda = cuda and torch.cuda.is_available()
 
-        h = [d]
-        for _ in range(l):
-            h.append(n_hidden)
+        self.num_features = num_features
+        self.num_layers = num_layers
+        self.num_classes = num_classes
+        self.num_hidden = args.num_hidden
+        self.reapproximate = not args.HyperGCN_fast
+        self.MLP_hidden = args.MLP_hidden
+
+        self.dropout = args.dropout
+        self.num_layers = num_layers
+        self.mediators = args.HyperGCN_mediators
+
+        cuda = args.cuda>=0 and torch.cuda.is_available()
+
+        h = [self.num_features]
+        for _ in range(self.num_layers):
+            h.append(self.num_hidden)
 
         self.layers = nn.ModuleList(
-            [HyperGraphConvolution(h[i], h[i + 1], reapproximate, cuda) for i in range(l)])
+            [HyperGraphConvolution(h[i], h[i + 1], self.reapproximate, cuda) for i in range(self.num_layers)])
 
-        self.net = MLP(in_channels=n_hidden, hidden_channels=nethid, out_channels=n_classes,
-                       num_layers=1, dropout=dropout)
+        self.net = MLP(in_channels=self.num_hidden, hidden_channels=self.MLP_hidden, out_channels=num_classes,
+                       num_layers=1, dropout=self.dropout)
 
-        self.do, self.l = dropout, n_layers
-        self.structure, self.m = structure, mediators
+        self.structure=None
 
-    def forward(self, H, structure=None):
+    def reset_parameters(self):
+        self.net.reset_parameters()
+        for layer in self.layers:
+            layer.reset_parameters()
+
+    def forward(self, data, structure=None):
+        Z = data.X_TORCH
         if structure == None:
             structure = self.structure
-        do, l, m = self.do, self.l, self.m
         for i, hidden in enumerate(self.layers):
-            H = F.relu(hidden(structure, H, m))
-            H = F.dropout(H, do, training=self.training)
-        H = self.net(H)
-        return H
+            Z = F.relu(hidden(structure, Z, self.mediators))
+            Z = F.dropout(Z, self.dropout, training=self.training)
+        Z = self.net(Z)
+        return Z
 
-    def forward_cl(self, H, structure=None):
+    def forward_cl(self, data, structure=None):
+        Z = data.X_TORCH
         if structure == None:
             structure = self.structure
-        do, l, m = self.do, self.l, self.m
         for i, hidden in enumerate(self.layers):
-            H = F.relu(hidden(structure, H, m))
-            if i < l - 1:
-                H = F.dropout(H, do, training=self.training)
-        return H
+            Z = F.relu(hidden(structure, Z, self.mediators))
+            if i < self.num_layers - 1:
+                Z = F.dropout(Z, self.dropout, training=self.training)
+        return Z
 
 
 class MLP(nn.Module):
@@ -225,8 +240,7 @@ def Laplacian(V, E, X, m):
     rv = np.random.rand(X.shape[1])
 
     for k in E:
-        hyperedge = list(k)
-
+        hyperedge = k.nonzero()[0]
         p = np.dot(X[hyperedge], rv)  # projection onto a random vector rv
         s, i = np.argmax(p), np.argmin(p)
         Se, Ie = hyperedge[s], hyperedge[i]
