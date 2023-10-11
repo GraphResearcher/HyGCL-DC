@@ -6,7 +6,7 @@ Official source code of "Hypergraph Contrastive Learning for Drug Trafficking Co
 (ICDM 2023)
 
 <div>
-<img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/framework.jpg" width="1170" height="500">
+<img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/framework.png" width="1170" height="500">
 <h5>Fig. 1: The overall framework HyGCL-DC: DC: (a) it first constructs a hypergraph G based on the interactions among online
 drug-related users; (b) it integrates augmentations from the structure view and the attribute view to augment hypergraphs into
  ̃G1 and  ̃G2. HyGCL-DC is designed as an end-to-end framework that integrates self-supervised contrastive learning to boost the
@@ -90,8 +90,8 @@ and the corresponding communities are listed in TABLE I. Based on the above stra
 for the drug trafficking community detection task.
 
 <div align="center">
-<img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/intro.jpg" width="500" height="500">
-<h5>Fig. 2: Illustration about drug trafficking communities amongusers on Twitter</h5>
+<img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/Intro.jpg" width="500" height="500">
+<h5>Fig. 2: Illustration about drug trafficking communities among users on Twitter</h5>
 </div>
 
 ## Contact
