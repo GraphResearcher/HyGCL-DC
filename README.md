@@ -6,12 +6,12 @@ Official source code of "Hypergraph Contrastive Learning for Drug Trafficking Co
 (ICDM 2023)
 
 <div>
-<img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/framework.png" width="1170" height="500">
+<img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/framework.png" width="1200" height="400">
 <h5>Fig. 1: The overall framework HyGCL-DC: DC: (a) it first constructs a hypergraph G based on the interactions among online
 drug-related users; (b) it integrates augmentations from the structure view and the attribute view to augment hypergraphs into
  ̃G1 and  ̃G2. HyGCL-DC is designed as an end-to-end framework that integrates self-supervised contrastive learning to boost the
 node embeddings over unlabeled data by reaching the agreement among positive and negative embedding pairs and supervised
-learning with community labels for downstream drug trafficking community dete </h5>
+learning with community labels for downstream drug trafficking community detetection</h5>
 </div>
 
 
@@ -74,11 +74,11 @@ considered a member of the corresponding drug communities. For instance, Fig. 2(
 drugs including oxycodone, cocaine, and xanax. Based on the function of these drugs, we consider this user a member of
 the overlapping communities including the opioid community (oxycodone), stimulant community (cocaine), and depressant
 community (Xanax). (ii) If a user appears to suffer from drug overdose or drug addiction to the specific drug, he/she will
-be regarded as a member of the specific drug community. For instance, Fig. 2(c) illustrates a drug user ”Ua***on” that
+be regarded as a member of the specific drug community. For instance, Fig. 2(c) illustrates a drug user ”Ua\*\*\*on” that
 suffers from an opioid overdose. So we classify this user as a member of the opioid community. (iii) If we can find evidence
 on Twitter that a user used to purchase specific drugs from others on Twitter, then he/she belongs to a member of the
-corresponding drug community. For example, Fig. 2(c) shows a drug buyer ”Bd***in” that purchased oxycodone from drug
-seller ”Su***oy”. We consider he/she as a member of the opioid community. (iv) If we could not find any evidence that
+corresponding drug community. For example, Fig. 2(c) shows a drug buyer ”Bd\*\*\*in” that purchased oxycodone from drug
+seller ”Su\*\*\*oy”. We consider he/she as a member of the opioid community. (iv) If we could not find any evidence that
 a user suffers from drug overdoses or purchases from others, instead, he/she is very actively involved in discussing and
 propagating specific drugs, we also consider he/she a member of the corresponding drug community. For instance, if a user
 actively retweets LSD promotion tweets, but does not show evidence of purchasing or having LSD on Twitter, he/she is
