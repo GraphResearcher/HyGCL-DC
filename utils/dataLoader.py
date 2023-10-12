@@ -73,11 +73,11 @@ def load_twitter_data(path_dir):
     hyperedge_file_path = osp.join(path_dir, "hyperedges.npz")
     H = load_npz(hyperedge_file_path).astype(np.int32).toarray()
 
-    embed_file_path = osp.join(path_dir, f"community_id_embed_bio_drug_other.txt")
+    embed_file_path = osp.join(path_dir, f"features.txt")
     X = np.loadtxt(embed_file_path)
     X = X[:, 1:]
     # # load labels
-    label_file_path = osp.join(path_dir, "label_comm.txt")
+    label_file_path = osp.join(path_dir, "labels.txt")
     Y = np.loadtxt(label_file_path).astype(np.int32)
     empty_row = (H.sum(0) < 3).nonzero()[0]
     empty_col = np.all(np.isclose(H.T, 0), axis=1).nonzero()
