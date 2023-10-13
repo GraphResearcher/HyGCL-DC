@@ -58,7 +58,7 @@ still regarded as a member of the hallucinogen community.(v) If a user is promot
 drugs on Twitter, but he/she does not mention the specific type of drugs, then we consider the user a member of others drug
 community. For instance, if a user complains that he/she is suffering from drug overdoses but does not mention the type
 of drugs that he/she is addicted to, then we regard the user as a member of others community. Mention that, partial of drugs
-and the corresponding communities are listed in TABLE I. Based on the above strategy, we can obtain the ground truth
+and the corresponding communities are listed in Table I. Based on the above strategy, we can obtain the ground truth
 for the drug trafficking community detection task.
 
 ### Content Feature
@@ -83,7 +83,7 @@ tweets involved within the conversation. The conversation-based hyperedge serves
 topics among the group of users. (iii) R3: users-include-hashtag hyperedge relation
 indicates that a bunch of users actively discuss the specific
 hashtag-based topics by posting the specific hashtag in tweets
-or profiles. Partial hashtag keywords are listed in TABLE I. For
+or profiles. Partial hashtag keywords are listed in Table I. For
 instance, a group of users posts tweets on Twitter that include
 oxycodone, one of the opioid drugs. Then the oxycodone hashtag will be considered as a hyperedge that encompasses all of the users in this group. (iv) R4: users-contain-emoji hyperedge relation signifies that a bunch of users contains a specific drug-related emoji in their tweets or profiles. 
 Examples of drug-related emojis are illustrated in Fig. 2(b). Similar to hashtags,
@@ -102,7 +102,7 @@ we use emojis to describe the interested drugs in this group.
 | Stimulant      | Cocaine, Amphetamine, Metaphetamine                 | 
 | Depressant     | Xanax, Farmapram, Valium, Halcion, Ativan, Klonopin |
 | Others         | Drugs that are not listed above                     |
-<p> Table 1: Type of drug communities and related drugs </p>
+<p> Table I: Type of drug communities and related drugs </p>
 </div>
 
 
