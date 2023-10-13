@@ -5,13 +5,15 @@ Hypergraph Contrastive Learning for Drug Trafficking Community Detection
 Official source code of "Hypergraph Contrastive Learning for Drug Trafficking Community Detection" 
 (ICDM 2023)
 
+[![Conference](https://img.shields.io/badge/ICDM-2023-blue)](https://www.cloud-conf.net/icdm2023/index.html)
+
 <div>
 <img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/framework.png" width="1200" height="400">
-<h5>Fig. 1: The overall framework HyGCL-DC: DC: (a) it first constructs a hypergraph G based on the interactions among online
+<p>Fig. 1: The overall framework HyGCL-DC: DC: (a) it first constructs a hypergraph G based on the interactions among online
 drug-related users; (b) it integrates augmentations from the structure view and the attribute view to augment hypergraphs into
  ̃G1 and  ̃G2. HyGCL-DC is designed as an end-to-end framework that integrates self-supervised contrastive learning to boost the
 node embeddings over unlabeled data by reaching the agreement among positive and negative embedding pairs and supervised
-learning with community labels for downstream drug trafficking community detetection</h5>
+learning with community labels for downstream drug trafficking community detetection.</p>
 </div>
 
 
@@ -37,36 +39,6 @@ Six researchers spent 62 days annotating these Twitter users into six communitie
 With the specific criteria, six researchers annotate the filtered metadata sperately. For these Twitter users with disagreed labels, 
 we conduct further discussion among annotators for cross-validation. To conclude, we obtain the drug hypergraph including 2,725 user nodes and 35,012 hyperedges.
 
-### Content Feature
-For each Twitter user, we consider as a node in Twitter-HyDrug. Then, for each Twitter user, we extract the text information, including
-usernames, profiles, and tweets to describe these users within drug communities. To further accurately characterize Twitter
-users, we categorize the tweets into two groups: drug-related and drug-unrelated tweets, with a set of drug keywords. 
-Then, as most users have sufficient tweets on Twitter, we select partial tweets including all drug-related
-tweets and five drug-unrelated tweets to effectively and efficiently represent these users. Specifically, for drug-unrelated
-tweets, we prioritize drug-unrelated tweets involving active interactions with other users in the drug community. For
-instance, if the number of drug-unrelated tweets is much more than five, then we select these tweets with more interactions.
-On the contrary, if the user has fewer than five drug-unrelated tweets, we leverage all the drug-unrelated tweets. Then
-we combine profiles, usernames, drug-related tweets, as well as drug-unrelated tweets, and further feed them to the pre-
-trained transformer-based language model, SentenceBert, to obtain fixed-length feature vectors.
-
-### Hyperedge
-To exhaustively depict the complex and group- wise relationships among users in Twitter-HyDrug, we define
-four types of hyperedges for describing the activities among users as follows: (i) R1: users-follow-user hyperedge 
-relation denotes that a group of users follow a specific user in Twitter-HyDrug. The follow/following-based hyperedge 
-aims to represent the social connections within drug trafficking communities, illustrating the friend circles involved 
-in such illicit activities. (ii) R2: users-engage-conversation hyperedge relation represents that a group of users is 
-engaged in a tweet-based conversation, encompassing activities such as posting, replying, retweeting, and liking the 
-tweets involved within the conversation. The conversation-based hyperedge serves to portray the shared interests and 
-topics among the group of users. (iii) R3: users-include-hashtag hyperedge relation
-indicates that a bunch of users actively discuss the specific
-hashtag-based topics by posting the specific hashtag in tweets
-or profiles. Partial hashtag keywords are listed in TABLE I. For
-instance, a group of users posts tweets on Twitter that include
-oxycodone, one of the opioid drugs. Then the oxycodone hashtag will be considered as a hyperedge that encompasses all of
-the users in this group. (iv) R4: users-contain-emoji hyperedge relation signifies that a bunch of users contains a specific drug-related emoji in their tweets or profiles. 
-Examples of drug-related emojis are illustrated in Fig. 2(b). Similar to hashtags,
-we use emojis to describe the interested drugs in this group.
-
 ### Annotation Rules
 (i) If a user actively promotes some type of drug on Twitter or has rich connections (e.g.,
 following, replying, liking, and retweeting) with other drug- related users in specific drug communities, he/she will be 
@@ -89,9 +61,55 @@ of drugs that he/she is addicted to, then we regard the user as a member of othe
 and the corresponding communities are listed in TABLE I. Based on the above strategy, we can obtain the ground truth
 for the drug trafficking community detection task.
 
+### Content Feature
+For each Twitter user, we consider as a node in Twitter-HyDrug. Then, for each Twitter user, we extract the text information, including
+usernames, profiles, and tweets to describe these users within drug communities. To further accurately characterize Twitter
+users, we categorize the tweets into two groups: drug-related and drug-unrelated tweets, with a set of drug keywords. 
+Then, as most users have sufficient tweets on Twitter, we select partial tweets including all drug-related
+tweets and five drug-unrelated tweets to effectively and efficiently represent these users. Specifically, for drug-unrelated
+tweets, we prioritize drug-unrelated tweets involving active interactions with other users in the drug community. For
+instance, if the number of drug-unrelated tweets is much more than five, then we select these tweets with more interactions.
+On the contrary, if the user has fewer than five drug-unrelated tweets, we leverage all the drug-unrelated tweets. Then
+we combine profiles, usernames, drug-related tweets, as well as drug-unrelated tweets, and further feed them to the pre-trained transformer-based language model, SentenceBert, to obtain fixed-length feature vectors.
+
+### Hyperedge
+To exhaustively depict the complex and group-wise relationships among users in Twitter-HyDrug, we define
+four types of hyperedges for describing the activities among users as follows: (i) R1: users-follow-user hyperedge 
+relation denotes that a group of users follow a specific user in Twitter-HyDrug. The follow/following-based hyperedge 
+aims to represent the social connections within drug trafficking communities, illustrating the friend circles involved 
+in such illicit activities. (ii) R2: users-engage-conversation hyperedge relation represents that a group of users is 
+engaged in a tweet-based conversation, encompassing activities such as posting, replying, retweeting, and liking the 
+tweets involved within the conversation. The conversation-based hyperedge serves to portray the shared interests and 
+topics among the group of users. (iii) R3: users-include-hashtag hyperedge relation
+indicates that a bunch of users actively discuss the specific
+hashtag-based topics by posting the specific hashtag in tweets
+or profiles. Partial hashtag keywords are listed in TABLE I. For
+instance, a group of users posts tweets on Twitter that include
+oxycodone, one of the opioid drugs. Then the oxycodone hashtag will be considered as a hyperedge that encompasses all of the users in this group. (iv) R4: users-contain-emoji hyperedge relation signifies that a bunch of users contains a specific drug-related emoji in their tweets or profiles. 
+Examples of drug-related emojis are illustrated in Fig. 2(b). Similar to hashtags,
+we use emojis to describe the interested drugs in this group.
+
+
+
+ 
+<div align="center">
+
+| Community Type | Drugs (Key Words)                                   |
+|----------------|-----------------------------------------------------|
+ | Cannabis       | Cannabis, and all cannabis-infused products         |
+| Opioid         | Oxycodone, Codeine, Morphine, Fentanyl, Hydrocodone |
+| Hallucinogen   | LSD, MDMA, Shroom, Mescaline, DMT, Ketamine         |
+| Stimulant      | Cocaine, Amphetamine, Metaphetamine                 | 
+| Depressant     | Xanax, Farmapram, Valium, Halcion, Ativan, Klonopin |
+| Others         | Drugs that are not listed above                     |
+<p> Table 1: Type of drug communities and related drugs </p>
+</div>
+
+
+
 <div align="center">
 <img src="https://github.com/GraphResearcher/HyGCL-DC/blob/main/figs/Intro.jpg" width="500" height="500">
-<h5>Fig. 2: Illustration about drug trafficking communities among users on Twitter</h5>
+<p>Fig. 2: Illustration about drug trafficking communities among users on Twitter</p>
 </div>
 
 ## Contact
