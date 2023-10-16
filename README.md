@@ -338,4 +338,13 @@ Epoch: 196, CL Loss: 7.8436, Train Loss: 0.3971, Valid Loss: 0.5153, Test  Loss:
 Epoch: 197, CL Loss: 7.8455, Train Loss: 0.3967, Valid Loss: 0.5149, Test  Loss: 0.7391, Train F1: 76.32%, Train Jaccard: 61.71%, Valid F1: 75.03%, Valid Jaccard: 60.04%, Test F1: 75.19%, Test Jaccard: 60.25%, 
 Epoch: 198, CL Loss: 7.8462, Train Loss: 0.3960, Valid Loss: 0.5143, Test  Loss: 0.7402, Train F1: 76.45%, Train Jaccard: 61.88%, Valid F1: 75.00%, Valid Jaccard: 60.00%, Test F1: 75.23%, Test Jaccard: 60.30%, 
 Epoch: 199, CL Loss: 7.8444, Train Loss: 0.3956, Valid Loss: 0.5141, Test  Loss: 0.7406, Train F1: 76.48%, Train Jaccard: 61.92%, Valid F1: 74.97%, Valid Jaccard: 59.96%, Test F1: 75.29%, Test Jaccard: 60.37%, 
+Run 01:
+Highest Train F1: 76.48
+Highest Train Jaccard: 61.92
+Highest Valid F1: 75.17
+Highest Valid Jaccard: 60.22
+  Final Train F1: 76.04
+  Final Train Jaccard: 61.34
+   Final Test F1: 74.73
+   Final Test Jaccard: 59.66
 ```
