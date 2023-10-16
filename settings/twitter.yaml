@@ -1,0 +1,11 @@
+epochs: 200
+dropout: 0.4
+alpha_1: 0.2
+alpha_2: 1
+lr: 0.001
+wd: 0.001
+num_hidden: 256
+MLP_hidden: 256
+threshold: 0.5
+aug_ratio: 0.4
+cl_temperature: 0.8

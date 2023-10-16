@@ -1,0 +1,10 @@
+dropout: 0.5
+alpha_1: 1
+alpha_2: 1
+lr: 0.02
+wd: 0.01
+num_hidden: 256
+MLP_hidden: 256
+aug_ratio: 0.1
+cl_temperature: 0.2
+

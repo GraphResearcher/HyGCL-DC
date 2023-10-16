@@ -31,11 +31,11 @@ class HyperGraphConvolution(Module):
 
         if self.reapproximate:
             n, X = H.shape[0], HW.cpu().detach().numpy()
-            A = Laplacian(n, structure, X, m)
+            A = Laplacian(n, structure, X, m).to(self.cuda)
         else:
             A = structure
 
-        if self.cuda: A = A.cuda()
+        if self.cuda: A = A.to(self.cuda)
         A = Variable(A)
 
         AHW = SparseMM.apply(A, HW)
@@ -94,22 +94,29 @@ class HyperGCN(nn.Module):
         self.num_layers = num_layers
         self.mediators = args.HyperGCN_mediators
 
-        cuda = args.cuda>=0 and torch.cuda.is_available()
+        if args.cuda in [0, 1, 2, 3]:
+            device = torch.device('cuda:' + str(args.cuda)
+                                  if torch.cuda.is_available() else 'cpu')
+        else:
+            device = torch.device('cpu')
 
         h = [self.num_features]
         for _ in range(self.num_layers):
             h.append(self.num_hidden)
 
         self.layers = nn.ModuleList(
-            [HyperGraphConvolution(h[i], h[i + 1], self.reapproximate, cuda) for i in range(self.num_layers)])
+            [HyperGraphConvolution(h[i], h[i + 1], self.reapproximate, device) for i in range(self.num_layers)])
 
         self.net = MLP(in_channels=self.num_hidden, hidden_channels=self.MLP_hidden, out_channels=num_classes,
                        num_layers=1, dropout=self.dropout)
-
+        # self.proj_head = MLP(in_channels=args.MLP_hidden,hidden_channels=args.MLP_hidden,out_channels=args.MLP_hidden, num_layers=1,
+        #                      dropout=self.dropout)
+        self.proj_head = nn.Linear(self.num_hidden,self.num_hidden)
         self.structure=None
 
     def reset_parameters(self):
         self.net.reset_parameters()
+        self.proj_head.reset_parameters()
         for layer in self.layers:
             layer.reset_parameters()
 
@@ -124,13 +131,16 @@ class HyperGCN(nn.Module):
         return Z
 
     def forward_cl(self, data, structure=None):
-        Z = data.X_TORCH
+        pgd1 = torch.rand_like(data.X_TORCH)
+        Z = data.X_TORCH + pgd1
+        # Z = data.X_TORCH
         if structure == None:
             structure = self.structure
         for i, hidden in enumerate(self.layers):
             Z = F.relu(hidden(structure, Z, self.mediators))
             if i < self.num_layers - 1:
                 Z = F.dropout(Z, self.dropout, training=self.training)
+        Z = self.proj_head(Z)
         return Z
 
 

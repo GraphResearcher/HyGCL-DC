@@ -3,22 +3,25 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from model import HyperGCN
+import yaml
 from sklearn.metrics import f1_score, jaccard_score
-
+import os.path as osp
 
 def get_f1_score(y_pred, y_true):
     assert y_true.shape == y_pred.shape, "The shape of true labels and pred labels does not match"
     return f1_score(y_true=y_true, y_pred=y_pred, average="micro")
 
+
 def get_jaccard_score(y_pred, y_true):
     assert y_true.shape == y_pred.shape, "The shape of true labels and pred labels does not match"
     return jaccard_score(y_true=y_true, y_pred=y_pred, average="micro")
 
+
 def eval_scores(y_pred, y_true):
     f1 = get_f1_score(y_pred=y_pred, y_true=y_true)
     jaccard = get_jaccard_score(y_pred=y_pred, y_true=y_true)
-    return {"F1": f1,  "Jaccard": jaccard}
+    return {"F1": f1, "Jaccard": jaccard}
+
 
 def fix_seed(seed=37):
     random.seed(seed)
@@ -61,7 +64,7 @@ class Logger(object):
             best_results = []
             best_epoch = []
             for r in result:
-                index = np.argmax(r[:, 2]).item()
+                index = np.argmax(r[:, 3]).item()
                 best_epoch.append(index)
                 train_f1 = r[:, 0].max().item()
                 train_jaccard = r[:, 1].max().item()
@@ -77,12 +80,12 @@ class Logger(object):
 
             best_result = torch.tensor(best_results)
 
-            print(f'All runs:')
-            print("best epoch:", best_epoch)
-            r = best_result[:, 0]
-            print(f'Best Train F1: {r.mean():.2f} ± {r.std():.2f}')
-            r = best_result[:, 1]
-            print(f'Best Train Jaccard: {r.mean():.2f} ± {r.std():.2f}')
+            # print(f'All runs:')
+            # print("best epoch:", best_epoch)
+            # r = best_result[:, 0]
+            # print(f'Best Train F1: {r.mean():.2f} ± {r.std():.2f}')
+            # r = best_result[:, 1]
+            # print(f'Best Train Jaccard: {r.mean():.2f} ± {r.std():.2f}')
             r = best_result[:, 2]
             print(f'Highest Valid F1: {r.mean():.2f} ± {r.std():.2f}')
             r = best_result[:, 3]
@@ -116,15 +119,12 @@ class Logger(object):
             plt.legend(['Train', 'Valid', 'Test'])
 
 
-def parse_model(args):
-    if args.method == "HyGCL-DC":
-        model = HyperGCN(num_features=args.num_features,
-                         num_layers=args.num_layers,
-                         num_classes=args.num_classes,
-                         args=args)
-    else:
-        raise ValueError("The method is not supported yet")
-    return model
+def load_yaml(file_dir, dname):
+    file_path = osp.join(file_dir, f"{dname}.yaml")
+    with open(file_path, 'r') as yaml_file:
+        data = yaml.safe_load(yaml_file)
+    return data
+
 
 def rand_train_test_idx(Y, train_prop=.5, valid_prop=.25, ignore_negative=True, balance=False):
     train_idx, valid_idx, test_idx = [], [], []
@@ -134,12 +134,12 @@ def rand_train_test_idx(Y, train_prop=.5, valid_prop=.25, ignore_negative=True, 
         c_num = len(c_idx)
         c_idx = [idx for idx in c_idx if idx not in train_idx]
         random.shuffle(c_idx)
-        split_idx = int(c_num*train_prop) - np.sum(Y[train_idx], axis=0)[i]
+        split_idx = int(c_num * train_prop) - np.sum(Y[train_idx], axis=0)[i]
         if split_idx > 0:
             train_idx = train_idx + c_idx[:split_idx]
         c_idx = [idx for idx in c_idx[split_idx:] if idx not in valid_idx]
         random.shuffle(c_idx)
-        split_idx =  int(c_num*valid_prop) - np.sum(Y[valid_idx], axis=0)[i]
+        split_idx = int(c_num * valid_prop) - np.sum(Y[valid_idx], axis=0)[i]
         if split_idx > 0:
             valid_idx = valid_idx + c_idx[:split_idx]
     test_idx = [idx for idx in range(Y.shape[0]) if idx not in train_idx and idx not in valid_idx]
@@ -148,7 +148,6 @@ def rand_train_test_idx(Y, train_prop=.5, valid_prop=.25, ignore_negative=True, 
 
 
 def evaluate(y_true, y_pred, split_idx, num_classes, loss_function):
-
     y_true, y_pred = y_true.cpu(), y_pred.cpu()
 
     if len(y_pred.shape) == 1 and len(y_true.shape) == 1:

@@ -1,8 +1,12 @@
 import time
 from tqdm import tqdm
 from argument import parse_args
+from model import HyperGCN
 from utils import *
+import warnings
+import os.path as osp
 
+warnings.filterwarnings("ignore")
 
 def train(model, data, device, args, cl=False):
     if cl:
@@ -27,7 +31,11 @@ def run(args):
     data, args = load_data(args)
     data.device = device
     data.update()
-    model = parse_model(args)
+    model = HyperGCN(num_features=args.num_features,
+                     num_layers=args.num_layers,
+                     num_classes=args.num_classes,
+                     args=args)
+
     model.to(device)
     activation, loss_function, cl_function, pred_function = get_functions(args.dname)
 
@@ -51,21 +59,21 @@ def run(args):
             model.train()
             optimizer.zero_grad()
 
-            data_aug1 = aug(dataset=data, method=args.aug_method, ratio=args.aug_ratio, deepcopy=True)
-            data_aug2 = aug(dataset=data, method=args.aug_method, ratio=args.aug_ratio, deepcopy=True)
+            data_aug1 = aug(dataset=data, method="mask",  ratio=args.aug_ratio, deepcopy=True)
+            data_aug2 = aug(dataset=data, method="hyperedge", ratio=args.aug_ratio, deepcopy=True)
 
             out1 = train(model=model, data=data_aug1, device=device, args=args, cl=True)
             out2 = train(model=model, data=data_aug2, device=device, args=args, cl=True)
 
             cl_loss = cl_function(out1, out2, args.cl_temperature)
 
-            loss = cl_loss * args.alpha
+            loss = cl_loss * args.alpha1
 
             output = train(model=model, data=data, device=device, args=args, cl=False)
             logit = activation(output) if activation == F.sigmoid else activation(output, dim=1)
 
             model_loss = loss_function(logit[train_idx], data.Y_TORCH[train_idx])
-            loss += model_loss
+            loss += model_loss * args.alpha2
 
             loss.backward()
             optimizer.step()
@@ -103,7 +111,7 @@ def run(args):
     avg_time, std_time = np.mean(runtime_list), np.std(runtime_list)
 
     best_val_f1, best_val_jaccard, best_test_f1, best_test_jaccard = logger.print_statistics()
-
+    # return best_val_f1, best_val_jaccard, best_test_f1, best_test_jaccard
     res_root = osp.join(args.root_dir, 'results')
     if not osp.isdir(res_root):
         os.makedirs(res_root)
@@ -111,7 +119,7 @@ def run(args):
     filename = f'{res_root}/{args.dname}.csv'
     print(f"Saving results to {filename}")
     with open(filename, 'a+') as write_obj:
-        cur_line = f'{args.method}_{args.lr}_{args.wd}'
+        cur_line = f'{args.method}_{args.cl}_{args.lr}_{args.wd}'
         cur_line += f',{best_val_f1.mean():.3f} ± {best_val_f1.std():.3f}'
         cur_line += f',{best_val_jaccard.mean():.3f} ± {best_val_jaccard.std():.3f}'
         cur_line += f',{best_test_f1.mean():.3f} ± {best_test_f1.std():.3f}'
@@ -128,4 +136,12 @@ def run(args):
 
 if __name__ == '__main__':
     args = parse_args()
+    setting = load_yaml(args.yaml_dir, args.dname)
+    for key, value in setting.items():
+        setattr(args, key, value)
     run(args)
+
+
+
+
+

@@ -1,0 +1,15 @@
+dropout: 0.5
+alpha_1: 1
+alpha_2: 2
+lr: 0.01
+wd: 0.01
+num_hidden: 256
+MLP_hidden: 256
+aug_ratio: 0.5
+cl_temperature: 0.6
+
+
+#Highest Test F1: 79.32 ± 3.03
+#Highest Test Jaccard: 65.80 ± 4.15
+#Highest Test F1: 80.72 ± 0.21
+#Highest Test Jaccard: 67.67 ± 0.30
