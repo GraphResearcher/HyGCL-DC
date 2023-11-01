@@ -348,5 +348,3 @@ Highest Valid Jaccard: 60.22
    Final Test F1: 74.73
    Final Test Jaccard: 59.66
 ```
-
-<meta name="google-site-verification" content="zN0Tx-Jc9cdmB3mtaD5gDgMQhIWByeg3A4lmuVMGpYQ" />
