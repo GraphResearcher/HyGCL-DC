@@ -3,7 +3,7 @@
 Hypergraph Contrastive Learning for Drug Trafficking Community Detection
 ====
 Official source code of "Hypergraph Contrastive Learning for Drug Trafficking Community Detection" 
-(ICDM 2023)
+(ICDM 2023) [[Source code](https://github.com/GraphResearcher/HyGCL-DC)]
 
 [![Conference](https://img.shields.io/badge/ICDM-2023-blue)](https://www.cloud-conf.net/icdm2023/index.html)
 
